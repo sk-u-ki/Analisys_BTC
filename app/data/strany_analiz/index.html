@@ -1,0 +1,280 @@
+
+    <!DOCTYPE html>
+    <html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Анализ криптоадопции по странам</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: #333;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                overflow: hidden;
+            }
+            .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 40px;
+                text-align: center;
+            }
+            .header h1 {
+                margin: 0;
+                font-size: 3em;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }
+            .countries-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 30px;
+                padding: 40px;
+            }
+            .country-card {
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+                overflow: hidden;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                border-top: 5px solid;
+            }
+            .country-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            }
+            .country-header {
+                padding: 25px;
+                color: white;
+                text-align: center;
+            }
+            .country-body {
+                padding: 25px;
+            }
+            .country-title {
+                font-size: 1.8em;
+                font-weight: bold;
+                margin: 0;
+            }
+            .country-subtitle {
+                opacity: 0.9;
+                margin: 5px 0 0 0;
+            }
+            .strategy-badge {
+                display: inline-block;
+                background: rgba(255,255,255,0.2);
+                padding: 5px 12px;
+                border-radius: 15px;
+                font-size: 0.9em;
+                margin-top: 10px;
+            }
+            .country-stats {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin: 20px 0;
+            }
+            .stat {
+                text-align: center;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 8px;
+            }
+            .stat-number {
+                font-size: 1.5em;
+                font-weight: bold;
+                margin: 0;
+            }
+            .stat-label {
+                color: #666;
+                font-size: 0.9em;
+                margin: 5px 0 0 0;
+            }
+            .view-button {
+                display: block;
+                width: 100%;
+                padding: 15px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-decoration: none;
+                text-align: center;
+                border-radius: 8px;
+                font-weight: bold;
+                transition: opacity 0.3s ease;
+            }
+            .view-button:hover {
+                opacity: 0.9;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🌍 Анализ криптоадопции по странам</h1>
+                <p>Восточная Европа (2010-2025)</p>
+            </div>
+            
+            <div class="countries-grid">
+    
+                <div class="country-card" style="border-top-color: #FF6B6B;">
+                    <div class="country-header" style="background: #FF6B6B;">
+                        <h2 class="country-title">Украина</h2>
+                        <p class="country-subtitle">UAH</p>
+                        <div class="strategy-badge">ЗАЩИТНИК</div>
+                    </div>
+                    <div class="country-body">
+                        <div class="country-stats">
+                            <div class="stat">
+                                <div class="stat-number" style="color: #FF6B6B;">41.2</div>
+                                <div class="stat-label">млн населения</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number" style="color: #FF6B6B;">71%</div>
+                                <div class="stat-label">интернет</div>
+                            </div>
+                        </div>
+                        <p><strong>Основные криптовалюты:</strong> Bitcoin, USDT, Ethereum</p>
+                        <p><strong>Предпочтения:</strong> Stablecoins (защита от девальвации)</p>
+                        <a href="ukraine/ukraine_analysis.html" class="view-button">
+                            📊 Посмотреть детальный анализ
+                        </a>
+                    </div>
+                </div>
+        
+                <div class="country-card" style="border-top-color: #4ECDC4;">
+                    <div class="country-header" style="background: #4ECDC4;">
+                        <h2 class="country-title">Польша</h2>
+                        <p class="country-subtitle">PLN</p>
+                        <div class="strategy-badge">ДИВЕРСИФИКАТОР</div>
+                    </div>
+                    <div class="country-body">
+                        <div class="country-stats">
+                            <div class="stat">
+                                <div class="stat-number" style="color: #4ECDC4;">37.7</div>
+                                <div class="stat-label">млн населения</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number" style="color: #4ECDC4;">85%</div>
+                                <div class="stat-label">интернет</div>
+                            </div>
+                        </div>
+                        <p><strong>Основные криптовалюты:</strong> Bitcoin, Ethereum, Polish tokens</p>
+                        <p><strong>Предпочтения:</strong> Bitcoin (инвестиции)</p>
+                        <a href="poland/poland_analysis.html" class="view-button">
+                            📊 Посмотреть детальный анализ
+                        </a>
+                    </div>
+                </div>
+        
+                <div class="country-card" style="border-top-color: #45B7D1;">
+                    <div class="country-header" style="background: #45B7D1;">
+                        <h2 class="country-title">Чехия</h2>
+                        <p class="country-subtitle">CZK</p>
+                        <div class="strategy-badge">ДИВЕРСИФИКАТОР</div>
+                    </div>
+                    <div class="country-body">
+                        <div class="country-stats">
+                            <div class="stat">
+                                <div class="stat-number" style="color: #45B7D1;">10.7</div>
+                                <div class="stat-label">млн населения</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number" style="color: #45B7D1;">88%</div>
+                                <div class="stat-label">интернет</div>
+                            </div>
+                        </div>
+                        <p><strong>Основные криптовалюты:</strong> Bitcoin, Ethereum, Local tokens</p>
+                        <p><strong>Предпочтения:</strong> Bitcoin (долгосрочные инвестиции)</p>
+                        <a href="czech/czech_analysis.html" class="view-button">
+                            📊 Посмотреть детальный анализ
+                        </a>
+                    </div>
+                </div>
+        
+                <div class="country-card" style="border-top-color: #96CEB4;">
+                    <div class="country-header" style="background: #96CEB4;">
+                        <h2 class="country-title">Швеция</h2>
+                        <p class="country-subtitle">SEK</p>
+                        <div class="strategy-badge">ИННОВАТОР</div>
+                    </div>
+                    <div class="country-body">
+                        <div class="country-stats">
+                            <div class="stat">
+                                <div class="stat-number" style="color: #96CEB4;">10.5</div>
+                                <div class="stat-label">млн населения</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number" style="color: #96CEB4;">97%</div>
+                                <div class="stat-label">интернет</div>
+                            </div>
+                        </div>
+                        <p><strong>Основные криптовалюты:</strong> Bitcoin, Ethereum, Green crypto</p>
+                        <p><strong>Предпочтения:</strong> Ethereum (DeFi и экология)</p>
+                        <a href="sweden/sweden_analysis.html" class="view-button">
+                            📊 Посмотреть детальный анализ
+                        </a>
+                    </div>
+                </div>
+        
+                <div class="country-card" style="border-top-color: #FFEAA7;">
+                    <div class="country-header" style="background: #FFEAA7;">
+                        <h2 class="country-title">Норвегия</h2>
+                        <p class="country-subtitle">NOK</p>
+                        <div class="strategy-badge">ИННОВАТОР</div>
+                    </div>
+                    <div class="country-body">
+                        <div class="country-stats">
+                            <div class="stat">
+                                <div class="stat-number" style="color: #FFEAA7;">5.4</div>
+                                <div class="stat-label">млн населения</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number" style="color: #FFEAA7;">98%</div>
+                                <div class="stat-label">интернет</div>
+                            </div>
+                        </div>
+                        <p><strong>Основные криптовалюты:</strong> Bitcoin, Ethereum, Green mining</p>
+                        <p><strong>Предпочтения:</strong> Bitcoin (зеленый майнинг)</p>
+                        <a href="norway/norway_analysis.html" class="view-button">
+                            📊 Посмотреть детальный анализ
+                        </a>
+                    </div>
+                </div>
+        
+                <div class="country-card" style="border-top-color: #DDA0DD;">
+                    <div class="country-header" style="background: #DDA0DD;">
+                        <h2 class="country-title">Беларусь</h2>
+                        <p class="country-subtitle">BYN</p>
+                        <div class="strategy-badge">ПОДАВЛЕННЫЙ</div>
+                    </div>
+                    <div class="country-body">
+                        <div class="country-stats">
+                            <div class="stat">
+                                <div class="stat-number" style="color: #DDA0DD;">9.4</div>
+                                <div class="stat-label">млн населения</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number" style="color: #DDA0DD;">79%</div>
+                                <div class="stat-label">интернет</div>
+                            </div>
+                        </div>
+                        <p><strong>Основные криптовалюты:</strong> Bitcoin, USDT, Local mining</p>
+                        <p><strong>Предпочтения:</strong> USDT (обход ограничений)</p>
+                        <a href="belarus/belarus_analysis.html" class="view-button">
+                            📊 Посмотреть детальный анализ
+                        </a>
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+    </body>
+    </html>
+    
