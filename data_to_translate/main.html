@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анализ криптоадопции: {country_name}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(70, 39, 39, 0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: {{colors[country_code]}};
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 5px solid {{colors[country_code]}};
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: {{colors[country_code]}};
+            margin: 0;
+        }
+        .stat-label {
+            color: #666;
+            margin: 5px 0 0 0;
+            font-size: 0.9em;
+        }
+        .section {
+            margin: 40px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .section h2 {
+            color: {{colors[country_code]}};
+            border-bottom: 2px solid {{colors[country_code]}};
+            padding-bottom: 10px;
+        }
+        .chart-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .chart-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .strategy-badge {
+            display: inline-block;
+            background: {{colors[country_code]}};
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .data-table th, .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .data-table th {
+            background-color: {{colors[country_code]}};
+            color: white;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            background: linear-gradient(120deg, {{colors[country_code]}}22 0%, {{colors[country_code]}}44 100%);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ {country_name}</h1>
+            <p>Анализ криптоадопции (2010-2025)</p>
+            <div class="strategy-badge">{country_info['strategy_type']}</div>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <h2>📊 Ключевые статистики</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">{avg_crypto:.1f}%</div>
+                        <div class="stat-label">Средняя криптоадопция</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{max_crypto:.1f}%</div>
+                        <div class="stat-label">Максимальная адопция ({int(max_crypto_year)})</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{correlation:.3f}</div>
+                        <div class="stat-label">Корреляция с инфляцией</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{growth_2010_2025:.0f}%</div>
+                        <div class="stat-label">Рост с 2010 года</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🎯 Стратегия криптоадопции</h2>
+                <div class="highlight">
+                    <strong>Тип стратегии:</strong> {country_info['strategy_type']}<br>
+                    <strong>Описание:</strong> {strategy_description[country_info['strategy_type']]}<br>
+                    <strong>Основные криптовалюты:</strong> {', '.join(country_info['main_crypto'])}<br>
+                    <strong>Предпочтения:</strong> {country_info['crypto_preference']}<br>
+                    <strong>Драйверы адопции:</strong> {country_info['crypto_drivers']}
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📈 Динамика криптоадопции</h2>
+                <div class="chart-container">
+                    <img src="{country_code.lower()}_crypto_trend.png" alt="Динамика криптоадопции {country_name}">
+                </div>
+                <p>График показывает изменение доли населения, владеющего криптовалютами, с 2010 по 2025 год.</p>
+            </div>
+            
+            <div class="section">
+                <h2>🔗 Связь с инфляцией</h2>
+                <div class="chart-container">
+                    <img src="{country_code.lower()}_correlation.png" alt="Корреляция инфляции и криптоадопции {country_name}">
+                </div>
+                <p>Диаграмма рассеяния демонстрирует взаимосвязь между уровнем инфляции и криптоадопцией. 
+                Корреляция составляет <strong>{correlation:.3f}</strong>.</p>
+            </div>
+            
+            <div class="section">
+                <h2>💰 Экономические показатели</h2>
+                <div class="chart-container">
+                    <img src="{country_code.lower()}_economics.png" alt="Экономические показатели {country_name}">
+                </div>
+                <p>Комплексный анализ основных экономических индикаторов, влияющих на криптоадопцию.</p>
+            </div>
+            
+            <div class="section">
+                <h2>📋 Детальные данные</h2>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Год</th>
+                            <th>Криптоадопция (%)</th>
+                            <th>Инфляция (%)</th>
+                            <th>ВВП на душу (USD)</th>
+                            <th>Безработица (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
