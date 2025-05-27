@@ -1,0 +1,10 @@
+# Финальная статистика
+    print("\n📊 КЛЮЧЕВЫЕ РЕЗУЛЬТАТЫ:")
+    print("=" * 50)
+    print(f"🏛️ Корреляция доверие-BTC: {overall_trust:.3f}")
+    print(f"📊 Корреляция HDI-BTC: {df['HDI'].corr(df['Crypto_Adoption']):.3f}")
+    print(f"📈 Корреляция инфляция-BTC: {df['Inflation'].corr(df['Crypto_Adoption']):.3f}")
+    print(f"🎯 Кластеров стран: {len(clusters['Кластер'].unique())}")
+    print(f"🏆 Лидер адопции 2025: {df[df['Year']==2025].loc[df[df['Year']==2025]['Crypto_Adoption'].idxmax(), 'Country_RU']}")
+    
+    print("🏁 Анализ завершен!")
