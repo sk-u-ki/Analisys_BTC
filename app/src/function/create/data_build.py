@@ -73,7 +73,7 @@ def hypothesis_analysis(df, countries, base):
 def extended_data_2010_2025(base) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     print("📊 Создание расширенных данных с 2010 года…")
     years = list(range(2010, 2026))
-    
+    #https://api.worldbank.org/v2/country/{ISO}/indicator/FP.CPI.TOTL.ZG?format=json
     # ИСПРАВЛЕННЫЕ данные по всем странам
     countries_data: Dict[str, Dict[str, Any]] = {
         'Ukraine': {
