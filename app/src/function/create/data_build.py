@@ -1,43 +1,119 @@
-
 import os
-import datetime as _dt
+import datetime as dt
 import warnings
-from typing import Tuple, Dict, Any
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-import matplotlib.pyplot as plt
+from typing import Any, Dict, Tuple
+import sys
+
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from scipy import stats
-import argparse
 
-from function.func import *
+# ИСПРАВЛЯЕМ ПУТЬ К МОДУЛЯМ
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Поднимаемся на 3 уровня вверх: create -> function -> src -> app
+project_root = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
+function_dir = os.path.join(project_root, 'app', 'src', 'function')
+
+# Добавляем пути в sys.path
+if function_dir not in sys.path:
+    sys.path.insert(0, function_dir)
+
+print(f"🔧 Добавлен путь: {function_dir}")
+
+# ТЕПЕРЬ ИМПОРТЫ БУДУТ РАБОТАТЬ
+try:
+    from app.src.function.api import build_country_frame 
+    from func import optimize_int_columns
+    print("✅ Модули импортированы успешно")
+except ImportError as e:
+    print(f"❌ Ошибка импорта: {e}")
+    # Альтернативный способ - прямой импорт
+    import importlib.util
+    
+    api_path = os.path.join(function_dir, 'api.py')
+    func_path = os.path.join(function_dir, 'func.py')
+    
+    # Загружаем api.py
+    spec = importlib.util.spec_from_file_location("api", api_path)
+    api_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(api_module)
+    build_country_frame = api_module.build_country_frame
+    
+    # Загружаем func.py
+    spec = importlib.util.spec_from_file_location("func", func_path)
+    func_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(func_module)
+    optimize_int_columns = func_module.optimize_int_columns
+    
+    print("✅ Модули загружены через importlib")
 
 warnings.filterwarnings("ignore")
 
+# ─── ГОДА и СПРАВОЧНИК СТРАН  ─────────────────────────────────────────────
+YEARS = list(range(2010, 2026))        # ← вот здесь объявляется YEARS
+
+COUNTRY_META: Dict[str, Dict[str, str]] = {
+    "ukr": {"name_ru": "Украина",  "currency": "UAH"},
+    "pol": {"name_ru": "Польша",   "currency": "PLN"},
+    "cze": {"name_ru": "Чехия",    "currency": "CZK"},
+    "swe": {"name_ru": "Швеция",   "currency": "SEK"},
+    "nor": {"name_ru": "Норвегия", "currency": "NOK"},
+    "blr": {"name_ru": "Беларусь", "currency": "BYN"},
+}
+
+# ─── ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ ДАННЫХ  ────────────────────────────────────
+def extended_data_2010_2025(base_path: str | None = None) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    """Загружает данные ТОЛЬКО через API без лишних данных"""
+    print("📊 Загрузка данных через World Bank API...")
+    
+    YEARS = list(range(2010, 2026))
+    
+    COUNTRY_META = {
+        "ukr": {"name_ru": "Украина", "currency": "UAH"},
+        "pol": {"name_ru": "Польша", "currency": "PLN"},
+        "cze": {"name_ru": "Чехия", "currency": "CZK"},
+        "swe": {"name_ru": "Швеция", "currency": "SEK"},
+        "nor": {"name_ru": "Норвегия", "currency": "NOK"},
+        "blr": {"name_ru": "Беларусь", "currency": "BYN"},
+    }
+    
+    rows = []
+    
+    for iso, meta in COUNTRY_META.items():
+        try:
+            # Загружаем ТОЛЬКО через API
+            econ = build_country_frame(iso, YEARS)
+            print(f"   ✅ {meta['name_ru']}: {len(econ)} записей")
+            
+            for _, rec in econ.iterrows():
+                rows.append({
+                    "Year": int(rec["Year"]),
+                    "Country": iso.upper(),
+                    "Country_RU": meta["name_ru"],
+                    "Currency": meta["currency"],
+                    "GDP_Per_Capita": int(rec["gdp_per_capita"]) if pd.notna(rec["gdp_per_capita"]) else 0,
+                    "Inflation": round(float(rec["inflation"]), 2) if pd.notna(rec["inflation"]) else 0.0,
+                    "Unemployment": round(float(rec["unemployment"]), 2) if pd.notna(rec["unemployment"]) else 0.0,
+                })
+                
+        except Exception as e:
+            print(f"   ❌ Ошибка для {meta['name_ru']}: {e}")
+            continue
+    
+    df = optimize_int_columns(pd.DataFrame(rows))
+    df["Year"] = df["Year"].astype("int32")
+    
+    print(f"✅ Загружено {len(df)} записей ТОЛЬКО через API")
+    return df, COUNTRY_META
 
 
 # ────────────────────────────── DATA BUILD ───────────────────────────────
 
-def add_hdi_data(countries_data):
-    """Добавление данных HDI (Human Development Index) по годам"""
-    
-    # HDI данные по странам (2010-2025)
-    hdi_data = {
-        'Ukraine': [0.710, 0.720, 0.734, 0.734, 0.743, 0.743, 0.751, 0.751, 0.759, 0.759, 0.773, 0.773, 0.734, 0.734, 0.734, 0.734],
-        'Poland': [0.813, 0.813, 0.834, 0.834, 0.855, 0.855, 0.865, 0.865, 0.876, 0.876, 0.880, 0.880, 0.876, 0.876, 0.876, 0.876],
-        'Czech': [0.861, 0.861, 0.878, 0.878, 0.888, 0.888, 0.900, 0.900, 0.900, 0.900, 0.889, 0.889, 0.889, 0.889, 0.889, 0.889],
-        'Sweden': [0.885, 0.885, 0.907, 0.907, 0.933, 0.933, 0.937, 0.937, 0.945, 0.945, 0.947, 0.947, 0.947, 0.947, 0.947, 0.947],
-        'Norway': [0.938, 0.938, 0.944, 0.944, 0.949, 0.949, 0.953, 0.953, 0.957, 0.957, 0.961, 0.961, 0.961, 0.961, 0.961, 0.961],
-        'Belarus': [0.786, 0.786, 0.796, 0.796, 0.808, 0.808, 0.817, 0.817, 0.823, 0.823, 0.823, 0.823, 0.808, 0.808, 0.808, 0.808]
-    }
-    
-    # Добавляем HDI в данные стран
-    for country_code, hdi_values in hdi_data.items():
-        countries_data[country_code]['hdi'] = hdi_values
-    
-    return countries_data
+
 def hypothesis_analysis(df, countries, base):
     """Создание детального анализа гипотез с конкретными критериями"""
     print("🎯 Создание анализа гипотез...")
@@ -70,200 +146,6 @@ def hypothesis_analysis(df, countries, base):
     print(f"✅ Анализ гипотез создан: {hypothesis_path}")
     return crisis_corr, stable_corr, transition_corr
 
-def extended_data_2010_2025(base) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-    print("📊 Создание расширенных данных с 2010 года…")
-    years = list(range(2010, 2026))
-    #https://api.worldbank.org/v2/country/{ISO}/indicator/FP.CPI.TOTL.ZG?format=json
-    # ИСПРАВЛЕННЫЕ данные по всем странам
-    countries_data: Dict[str, Dict[str, Any]] = {
-        'Ukraine': {
-            'name_ru': 'Украина',
-            'currency': 'UAH',
-            'main_crypto': ['Bitcoin', 'USDT', 'Ethereum'],
-            'crypto_preference': 'Stablecoins (защита от девальвации)',
-            
-            'gdp_per_capita': [3577, 3855, 3927, 3014, 2115, 2640, 2656, 3095, 3659, 3425, 3752, 4828, 4576, 5181, 5500, 5800],
-            'inflation': [9.4, 0.6, -0.3, 12.1, 48.7, 13.9, 14.4, 10.9, 7.9, 2.7, 10.0, 26.6, 12.9, 13.4, 15.1, 15.9],
-            'crypto_adoption': [0.0, 0.1, 0.2, 0.5, 1.8, 3.2, 4.1, 4.5, 4.8, 5.2, 9.5, 15.2, 14.1, 12.8, 11.2, 10.5],
-            'gdp_growth': [4.1, 0.2, 0.0, -6.6, -9.8, 2.4, 2.5, 3.4, 3.2, -4.0, 3.4, -29.1, 5.3, 4.0, 3.5, 3.8],
-            'currency_volatility': [1.8, 2.1, 3.2, 15.8, 52.3, 25.4, 18.2, 12.1, 8.9, 8.5, 15.2, 45.8, 38.2, 25.1, 20.5, 18.2],
-            'unemployment': [7.4, 7.5, 7.2, 9.3, 9.1, 9.4, 9.6, 8.8, 8.6, 8.5, 9.9, 18.6, 17.2, 16.8, 15.5, 14.8],
-            'exports': [51.4, 68.8, 63.3, 53.9, 38.1, 36.4, 43.3, 47.3, 49.3, 50.1, 49.2, 44.1, 57.5, 62.8, 68.2, 72.1],
-            'imports': [60.7, 84.7, 76.9, 54.4, 37.5, 39.2, 43.9, 49.6, 57.1, 60.8, 54.4, 42.2, 55.9, 61.4, 67.8, 71.5],
-            'government_debt': [40.0, 36.6, 40.1, 70.3, 79.4, 81.0, 81.2, 71.8, 60.9, 50.3, 60.8, 78.8, 84.2, 88.5, 92.1, 95.2],
-            'government_trust': [40, 35, 32, 25, 18, 15, 20, 22, 24, 25, 23, 18, 20, 22, 25, 27],
-            'corruption_index': [26, 26, 25, 26, 27, 29, 30, 32, 32, 33, 33, 32, 33, 34, 33, 35],
-            'political_stability': [-0.5, -0.8, -1.2, -2.5, -2.3, -1.8, -1.5, -1.2, -1.8, -2.1, -2.0, -2.8, -2.5, -2.2, -2.1, -2.0],
-            
-            'population': 41.2,
-            'internet_penetration': 71,
-            'strategy_type': 'ЗАЩИТНИК',
-            'crypto_drivers': 'Защита от девальвации гривны, обход санкций, международные переводы'
-        },
-        
-        'Poland': {
-            'name_ru': 'Польша',
-            'currency': 'PLN',
-            'main_crypto': ['Bitcoin', 'Ethereum', 'Polish tokens'],
-            'crypto_preference': 'Bitcoin (инвестиции)',
-            
-            'gdp_per_capita': [12294, 12648, 13432, 14342, 12495, 12372, 12414, 13823, 15694, 15694, 15694, 17640, 18920, 20150, 21380, 22100],
-            'inflation': [2.6, 3.7, 0.9, -0.9, -0.6, 2.0, 1.6, 3.4, 5.1, 3.4, 5.1, 15.3, 11.3, 6.2, 3.9, 3.7],
-            'crypto_adoption': [0.1, 0.3, 0.5, 0.8, 1.1, 1.5, 1.8, 2.1, 2.4, 2.7, 3.2, 8.5, 12.2, 15.8, 18.2, 19.1],
-            'gdp_growth': [3.6, 1.6, 1.4, 3.3, 3.8, 3.1, 5.1, 4.9, 5.4, -2.5, 6.9, 3.1, 2.8, 3.2, 3.0, 2.8],
-            'currency_volatility': [2.8, 3.2, 4.1, 8.7, 6.8, 5.2, 4.8, 6.2, 8.1, 6.2, 8.1, 11.4, 9.8, 8.5, 7.2, 6.8],
-            'unemployment': [9.7, 10.1, 9.0, 7.5, 6.2, 4.9, 3.8, 3.4, 3.3, 3.2, 2.9, 2.9, 3.1, 3.5, 3.8, 4.0],
-            'exports': [159.8, 184.5, 203.0, 218.2, 195.7, 195.1, 221.8, 249.8, 262.3, 269.4, 314.4, 390.7, 418.2, 445.8, 472.1, 495.2],
-            'imports': [173.7, 188.4, 203.5, 215.0, 188.4, 188.6, 202.0, 239.9, 271.0, 254.8, 310.3, 378.2, 405.6, 432.1, 458.9, 481.8],
-            'government_debt': [54.8, 55.6, 57.0, 50.4, 51.3, 54.2, 54.1, 48.9, 57.1, 57.4, 49.6, 49.6, 49.4, 49.8, 50.2, 50.8],
-            'government_trust': [44, 42, 40, 38, 35, 36, 37, 38, 40, 38, 40, 35, 36, 37, 38, 39],
-            'corruption_index': [53, 58, 60, 61, 62, 62, 60, 45, 45, 45, 45, 45, 56, 55, 45, 47],
-            'political_stability': [0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0, 0.2, 0.3, 0.2, 0.3, 0.1, 0.2, 0.2, 0.2, 0.3],
-            
-            'population': 37.7,
-            'internet_penetration': 85,
-            'strategy_type': 'ДИВЕРСИФИКАТОР',
-            'crypto_drivers': 'Диверсификация портфеля, хедж против злотого, технологические инвестиции'
-        },
-        
-        'Czech': {
-            'name_ru': 'Чехия',
-            'currency': 'CZK',
-            'main_crypto': ['Bitcoin', 'Ethereum', 'Local tokens'],
-            'crypto_preference': 'Bitcoin (долгосрочные инвестиции)',
-            
-            'gdp_per_capita': [19420, 20294, 20571, 19582, 18267, 18858, 20152, 23111, 26821, 26821, 26821, 28450, 29780, 31200, 32650, 34100],
-            'inflation': [1.5, 3.3, 1.4, 0.4, 0.3, 0.7, 2.5, 3.2, 3.8, 3.2, 3.8, 15.1, 10.7, 2.7, 2.0, 1.8],
-            'crypto_adoption': [0.1, 0.2, 0.4, 0.7, 1.0, 1.3, 1.6, 1.8, 2.1, 2.4, 2.8, 7.2, 9.5, 11.8, 13.2, 14.1],
-            'gdp_growth': [2.3, -0.8, -0.5, 2.7, 5.4, 2.5, 2.2, 3.6, 2.8, -5.8, 3.3, 2.4, 2.1, 2.5, 2.8, 3.0],
-            'currency_volatility': [2.5, 2.8, 3.5, 7.2, 5.9, 4.1, 3.8, 5.8, 7.9, 5.8, 7.9, 12.7, 10.1, 8.8, 7.5, 7.0],
-            'unemployment': [7.3, 7.0, 6.1, 5.1, 4.0, 2.9, 2.4, 2.2, 2.8, 2.6, 2.8, 2.4, 2.6, 3.0, 3.2, 3.4],
-            'exports': [132.1, 162.0, 161.8, 174.7, 156.9, 143.4, 174.3, 192.9, 215.5, 216.8, 243.5, 267.8, 285.4, 302.1, 318.9, 335.2],
-            'imports': [125.7, 143.1, 148.1, 156.0, 140.2, 134.2, 154.8, 177.6, 201.4, 198.7, 227.8, 251.2, 268.9, 285.6, 302.4, 318.8],
-            'government_debt': [38.4, 44.5, 42.6, 42.2, 36.8, 36.8, 32.6, 30.0, 38.1, 37.7, 41.9, 41.0, 43.8, 44.2, 44.6, 45.0],
-            'government_trust': [47, 45, 43, 41, 39, 40, 41, 42, 44, 42, 44, 40, 41, 42, 42, 43],
-            'corruption_index': [46, 49, 48, 51, 56, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 57],
-            'political_stability': [1.0, 0.9, 0.8, 0.7, 0.8, 0.9, 1.0, 0.8, 0.9, 0.8, 0.9, 0.7, 0.8, 0.8, 0.8, 0.9],
-            
-            'population': 10.7,
-            'internet_penetration': 88,
-            'strategy_type': 'ДИВЕРСИФИКАТОР',
-            'crypto_drivers': 'Технологические инновации, защита от инфляции, европейская интеграция'
-        },
-        
-        'Sweden': {
-            'name_ru': 'Швеция',
-            'currency': 'SEK',
-            'main_crypto': ['Bitcoin', 'Ethereum', 'Green crypto'],
-            'crypto_preference': 'Ethereum (DeFi и экология)',
-            
-            'gdp_per_capita': [49803, 56956, 60430, 58491, 51165, 51608, 53442, 51648, 54608, 54608, 54608, 56890, 58420, 60150, 61980, 63850],
-            'inflation': [1.9, 0.9, 0.4, -0.2, 0.0, 1.0, 1.8, 0.5, 2.2, 0.5, 2.2, 8.1, 5.9, 2.2, 2.0, 1.8],
-            'crypto_adoption': [0.3, 0.5, 0.8, 1.2, 1.6, 2.0, 2.3, 2.6, 3.0, 3.4, 3.8, 5.2, 6.1, 6.8, 7.2, 7.5],
-            'gdp_growth': [6.0, -0.3, 1.3, 2.7, 4.5, 2.1, 2.6, 1.2, 2.6, -2.8, 4.8, 1.9, 1.2, 2.0, 2.2, 2.4],
-            'currency_volatility': [1.8, 2.1, 2.8, 5.2, 4.1, 3.2, 2.9, 4.2, 6.1, 4.2, 6.1, 8.3, 7.1, 6.5, 6.0, 5.5],
-            'unemployment': [8.6, 8.0, 7.9, 7.4, 6.9, 6.9, 6.9, 6.8, 8.3, 8.3, 8.7, 7.5, 7.8, 8.1, 8.4, 8.6],
-            'exports': [158.4, 184.8, 181.5, 165.6, 152.0, 140.2, 151.4, 151.0, 165.6, 176.5, 193.8, 208.7, 221.4, 234.8, 248.5, 262.1],
-            'imports': [148.8, 166.8, 159.7, 148.8, 138.2, 131.8, 142.1, 142.8, 153.2, 167.1, 181.4, 195.2, 207.8, 220.9, 234.3, 247.8],
-            'government_debt': [39.4, 38.2, 40.6, 45.0, 43.9, 42.8, 41.0, 35.1, 39.9, 39.8, 35.3, 35.4, 32.9, 31.5, 30.2, 29.0],
-            'government_trust': [80, 78, 76, 74, 72, 73, 74, 75, 77, 75, 77, 73, 74, 75, 75, 76],
-            'corruption_index': [92, 88, 89, 87, 87, 88, 85, 83, 83, 83, 83, 83, 83, 83, 83, 84],
-            'political_stability': [1.5, 1.4, 1.3, 1.2, 1.3, 1.4, 1.5, 1.3, 1.4, 1.3, 1.4, 1.2, 1.3, 1.3, 1.3, 1.4],
-            
-            'population': 10.5,
-            'internet_penetration': 97,
-            'strategy_type': 'ИННОВАТОР',
-            'crypto_drivers': 'Технологические инновации, экологические проекты, цифровая экономика'
-        },
-        
-        'Norway': {
-            'name_ru': 'Норвегия',
-            'currency': 'NOK',
-            'main_crypto': ['Bitcoin', 'Ethereum', 'Green mining'],
-            'crypto_preference': 'Bitcoin (зеленый майнинг)',
-            
-            'gdp_per_capita': [87648, 73450, 75420, 74356, 60139, 59330, 70590, 67294, 75420, 75420, 75420, 78650, 81200, 83750, 86300, 88950],
-            'inflation': [2.4, 0.7, 2.0, 2.2, 2.2, 3.6, 1.9, 1.3, 3.5, 1.3, 3.5, 5.9, 5.5, 3.0, 2.8, 2.5],
-            'crypto_adoption': [0.2, 0.3, 0.6, 1.0, 1.3, 1.6, 1.9, 2.2, 2.6, 3.0, 3.4, 4.8, 5.5, 6.1, 6.5, 6.8],
-            'gdp_growth': [0.7, 2.7, 1.0, 2.0, 1.6, 1.2, 1.1, 1.9, 2.9, -0.7, 5.3, 2.8, 1.5, 2.1, 2.0, 2.2],
-            'currency_volatility': [1.5, 1.8, 2.5, 4.8, 3.9, 2.8, 2.5, 3.8, 5.2, 3.8, 5.2, 7.1, 6.2, 5.8, 5.5, 5.2],
-            'unemployment': [3.6, 3.2, 3.5, 3.5, 4.4, 4.7, 4.7, 4.2, 5.0, 5.0, 4.4, 3.2, 3.5, 3.8, 4.0, 4.2],
-            'exports': [130.7, 162.0, 153.8, 144.2, 103.4, 88.9, 102.1, 101.8, 122.2, 164.0, 183.9, 231.2, 195.4, 208.7, 222.1, 235.8],
-            'imports': [77.3, 89.1, 90.3, 87.9, 75.9, 68.8, 75.2, 74.5, 82.1, 91.8, 102.4, 118.7, 108.9, 116.3, 123.8, 131.5],
-            'government_debt': [43.6, 29.0, 27.4, 27.7, 27.9, 33.2, 36.4, 36.3, 39.7, 67.1, 45.5, 41.7, 38.2, 35.8, 33.5, 31.2],
-            'government_trust': [74, 72, 70, 68, 66, 67, 68, 68, 70, 68, 70, 66, 67, 68, 68, 69],
-            'corruption_index': [89, 85, 86, 87, 87, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 86],
-            'political_stability': [1.6, 1.5, 1.4, 1.3, 1.4, 1.5, 1.6, 1.4, 1.5, 1.4, 1.5, 1.3, 1.4, 1.4, 1.4, 1.5],
-            
-            'population': 5.4,
-            'internet_penetration': 98,
-            'strategy_type': 'ИННОВАТОР',
-            'crypto_drivers': 'Диверсификация нефтяного фонда, зеленые технологии, институциональные инвестиции'
-        },
-        
-        'Belarus': {
-            'name_ru': 'Беларусь',
-            'currency': 'BYN',
-            'main_crypto': ['Bitcoin', 'USDT', 'Local mining'],
-            'crypto_preference': 'USDT (обход ограничений)',
-            
-            'gdp_per_capita': [5819, 7031, 7973, 8039, 5762, 5143, 5762, 6330, 6890, 6330, 6890, 6450, 6200, 6350, 6500, 6650],
-            'inflation': [7.7, 59.2, 18.3, 18.1, 11.8, 10.6, 7.4, 5.5, 9.5, 5.5, 9.5, 12.8, 10.3, 8.5, 7.2, 6.8],
-            'crypto_adoption': [0.0, 0.1, 0.1, 0.2, 0.3, 0.4, 0.4, 0.5, 0.6, 0.7, 0.8, 1.2, 1.0, 0.9, 0.8, 0.9],
-            'gdp_growth': [7.7, 1.7, 1.0, 1.7, -3.8, -2.5, -0.2, 2.5, 1.2, -0.9, 2.3, -0.9, -1.5, 0.5, 1.0, 1.2],
-            'currency_volatility': [6.8, 8.2, 12.5, 18.7, 15.2, 12.8, 10.5, 12.1, 18.5, 12.1, 18.5, 15.2, 13.8, 12.0, 10.5, 9.8],
-            'unemployment': [0.7, 0.5, 0.5, 0.5, 1.0, 1.0, 0.8, 4.8, 4.2, 4.2, 3.9, 4.8, 5.2, 5.5, 5.8, 6.0],
-            'exports': [25.3, 46.1, 36.0, 31.2, 26.7, 23.5, 28.3, 33.0, 33.0, 28.8, 39.5, 41.8, 43.2, 44.7, 46.2, 47.8],
-            'imports': [34.9, 46.4, 43.0, 40.5, 34.2, 30.3, 32.9, 38.8, 42.5, 35.4, 42.8, 44.2, 45.7, 47.3, 48.9, 50.5],
-            'government_debt': [14.6, 31.5, 34.0, 34.7, 48.5, 53.4, 53.5, 47.5, 39.4, 46.7, 35.3, 46.9, 48.2, 49.5, 50.8, 52.1],
-            'government_trust': [30, 25, 22, 18, 15, 12, 15, 15, 18, 15, 18, 12, 13, 14, 15, 16],
-            'corruption_index': [25, 31, 29, 31, 32, 40, 44, 47, 47, 47, 47, 47, 47, 47, 47, 48],
-            'political_stability': [-0.5, -0.8, -1.0, -1.2, -1.5, -1.8, -2.0, -1.8, -1.5, -1.8, -1.5, -2.2, -2.0, -1.9, -1.8, -1.7],
-            
-            'population': 9.4,
-            'internet_penetration': 79,
-            'strategy_type': 'ПОДАВЛЕННЫЙ',
-            'crypto_drivers': 'Обход санкций, IT-экспорт, майнинг, защита от девальвации'
-        }
-    }
-
-    # ДОБАВЛЯЕМ HDI данные ПОСЛЕ создания countries_data
-    countries_data = add_hdi_data(countries_data)
-
-    rows = []
-    for code, info in countries_data.items():
-        for i, yr in enumerate(years):
-            rows.append({
-                "Year": int(yr),
-                "Country": code,
-                "Country_RU": info["name_ru"],
-                "Currency": info["currency"],
-                "GDP_Per_Capita": int(info["gdp_per_capita"][i]),
-                "Inflation": round(float(info["inflation"][i]), 2),
-                "Crypto_Adoption": round(float(info["crypto_adoption"][i]), 2),
-                "GDP_Growth": round(float(info["gdp_growth"][i]), 2),
-                "Currency_Volatility": round(float(info["currency_volatility"][i]), 2),
-                "Unemployment": round(float(info["unemployment"][i]), 2),
-                "Exports": round(float(info["exports"][i]), 1),
-                "Imports": round(float(info["imports"][i]), 1),
-                "Government_Debt": round(float(info["government_debt"][i]), 1),
-                "Government_Trust": int(info["government_trust"][i]),
-                "Corruption_Index": int(info["corruption_index"][i]),
-                "Political_Stability": round(float(info["political_stability"][i]), 2),
-                "HDI": round(float(info["hdi"][i]), 3),  # ← ДОБАВЛЯЕМ HDI
-                "Population": round(float(info["population"]), 1),
-                "Internet_Penetration": int(info["internet_penetration"]),
-                "Strategy_Type": info["strategy_type"],
-                "Main_Crypto": ", ".join(info["main_crypto"]),
-                "Crypto_Preference": info["crypto_preference"],
-                "Crypto_Drivers": info["crypto_drivers"],
-            })
-
-    df = optimize_int_columns(pd.DataFrame(rows))
-    df['Year'] = df['Year'].astype('int32')
-    
-    print(f"✅ Расширенные данные созданы: {len(df)} записей (2010-2025)")
-    return df, countries_data
 def extended_correlation_analysis(df, countries, base):
     """Расширенный анализ корреляций: BTC vs Trust/HDI + простая кластеризация"""
     print("🔍 Расширенный корреляционный анализ...")
